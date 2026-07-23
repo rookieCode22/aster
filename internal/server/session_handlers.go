@@ -5,10 +5,8 @@ import (
 	"net/http"
 
 	"aster/internal/server/auth"
-	"aster/internal/server/session"
+	"aster/internal/store"
 )
-
-// --- Session Handlers ---
 
 type createSessionRequest struct {
 	Title     string `json:"title"`
@@ -18,10 +16,9 @@ type createSessionRequest struct {
 func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetUser(r)
 	if user == nil {
-		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		writeJSON(w, 401, map[string]string{"error": "unauthorized"})
 		return
 	}
-
 	var req createSessionRequest
 	json.NewDecoder(r.Body).Decode(&req)
 	if req.Title == "" {
@@ -30,30 +27,32 @@ func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 	if req.AgentName == "" {
 		req.AgentName = "code-audit"
 	}
-
-	sess := s.sessions.Create(user.ID, req.Title, req.AgentName)
-	writeJSON(w, http.StatusCreated, sess)
+	sess, err := s.sessions.Create(user.ID, req.Title, req.AgentName)
+	if err != nil {
+		writeJSON(w, 500, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, 201, sess)
 }
 
 func (s *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetUser(r)
 	if user == nil {
-		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		writeJSON(w, 401, map[string]string{"error": "unauthorized"})
 		return
 	}
-
 	sessions := s.sessions.ListByUser(user.ID)
 	if sessions == nil {
-		sessions = []*session.Session{}
+		sessions = []*store.SessionRow{}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"sessions": sessions})
+	writeJSON(w, 200, map[string]any{"sessions": sessions})
 }
 
 func (s *Server) handleDeleteSession(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if err := s.sessions.Delete(id); err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		writeJSON(w, 404, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"ok": "deleted"})
+	writeJSON(w, 200, map[string]string{"ok": "deleted"})
 }
