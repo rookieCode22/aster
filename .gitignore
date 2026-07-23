@@ -19,3 +19,14 @@ internal/react/artifacts/
 .playwright-mcp/
 docs/
 refactor-docs/
+
+# Generated key fragments (security-critical — never commit)
+internal/vault/kp_env.go
+internal/vault/kp_config.go
+internal/vault/kp_runtime.go
+internal/vault/kp_tool.go
+internal/vault/derive.go
+
+# Build artifacts
+build/
+*.astm
