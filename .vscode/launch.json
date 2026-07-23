@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Aster",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/aster",
+            "args": [],
+            "env": {
+                "OPENAI_API_KEY": "not-needed",
+                "OPENAI_BASE_URL": "http://192.168.0.84:1234/v1"
+            }
+        }
+    ]
+}
