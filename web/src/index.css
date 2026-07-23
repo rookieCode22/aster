@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1a1a2e; }
+::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #6a6a8a; }
+
+/* Markdown in chat messages */
+.message-body pre {
+  @apply bg-gray-900 rounded-lg p-4 my-2 overflow-x-auto text-sm;
+}
+.message-body code {
+  @apply bg-gray-800 px-1.5 py-0.5 rounded text-emerald-400 text-sm;
+}
+.message-body pre code {
+  @apply bg-transparent p-0 text-gray-200;
+}
+.message-body ul { @apply list-disc ml-5 my-2; }
+.message-body ol { @apply list-decimal ml-5 my-2; }
+.message-body p { @apply my-1.5; }
