@@ -127,6 +127,10 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 
 func mustHome() string {
 	h, _ := os.UserHomeDir()
+	if len(h) > 2 && h[0] == '\\' && h[2] == ':' {
+		// Fix Windows paths like "\C:\Users\yummy" → "C:\Users\yummy"
+		h = h[1:]
+	}
 	return h
 }
 
