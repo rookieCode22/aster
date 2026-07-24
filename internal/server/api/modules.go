@@ -64,3 +64,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(v)
 }
+
+func errResp(msg string) map[string]string {
+	return map[string]string{"error": msg}
+}

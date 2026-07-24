@@ -2,7 +2,7 @@
 //
 // To integrate, add this to your Server struct initialization in server.go:
 //
-//   import "github.com/Q16G/aster/internal/license"
+//   import "aster/internal/license"
 //
 //   verifier := license.NewVerifier(licenseSecret)
 //   licHandler := api.NewLicenseHandler(store, verifier)
@@ -17,9 +17,9 @@ package server
 import (
 	"net/http"
 
-	"github.com/Q16G/aster/internal/server/api"
-	"github.com/Q16G/aster/internal/server/middleware"
-	"github.com/Q16G/aster/internal/store"
+	"aster/internal/server/api"
+	"aster/internal/server/middleware"
+	"aster/internal/store"
 )
 
 // RegisterLicenseRoutes adds license endpoints to an existing mux.

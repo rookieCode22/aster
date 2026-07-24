@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Q16G/aster/internal/license"
-	"github.com/Q16G/aster/internal/store"
+	"aster/internal/license"
+	"aster/internal/store"
 )
 
 // LicenseHandler handles license activation, status, and history.

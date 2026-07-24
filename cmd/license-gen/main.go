@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Q16G/aster/internal/license"
+	"aster/internal/license"
 )
 
 func main() {

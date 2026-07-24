@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Q16G/aster/internal/store"
+	"aster/internal/store"
 )
 
 // LicenseRequired ensures an active, non-expired license exists.

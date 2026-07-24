@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"aster/internal/license"
 	"aster/internal/server/api"
 	"aster/internal/server/auth"
 	"aster/internal/server/middleware"
@@ -32,7 +33,7 @@ func LoadConfig() *Config {
 		Port:        envInt("ASTER_PORT", 8080),
 		DataDir:     dataDir,
 		ModulesDir:  filepath.Join(dataDir, "modules"),
-		FrontendDir: envStr("ASTER_FRONTEND_DIR", "web/dashboard/dist"),
+		FrontendDir: envStr("ASTER_FRONTEND_DIR", "web/dist"),
 		JWTSecret:   envStr("ASTER_JWT_SECRET", "change-me-in-production"),
 		DatabaseURL: envStr("ASTER_DATABASE_URL", ""),
 	}
@@ -46,6 +47,7 @@ type Server struct {
 	hub      *ws.Hub
 	skills   *api.SkillHandler
 	modules  *api.ModuleHandler
+	verifier *license.Verifier
 }
 
 func New(cfg *Config) (*Server, error) {
@@ -72,6 +74,7 @@ func New(cfg *Config) (*Server, error) {
 		hub:      hub,
 		skills:   api.NewSkillHandler(db),
 		modules:  api.NewModuleHandler(cfg.ModulesDir),
+		verifier: license.NewVerifier([]byte(licenseSecret(cfg))),
 	}
 	return s, nil
 }
@@ -99,6 +102,10 @@ func (s *Server) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/v1/skills/custom/{name}", protected(s.skills.HandleDelete))
 	mux.HandleFunc("GET /api/v1/modules", protected(s.modules.HandleList))
 
+	// License routes
+	licHandler := api.NewLicenseHandler(s.db, s.verifier)
+	RegisterLicenseRoutes(mux, s.db, licHandler)
+
 	if s.cfg.FrontendDir != "" {
 		if info, err := os.Stat(s.cfg.FrontendDir); err == nil && info.IsDir() {
 			fs := http.FileServer(http.Dir(s.cfg.FrontendDir))
@@ -121,4 +128,11 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 func mustHome() string {
 	h, _ := os.UserHomeDir()
 	return h
+}
+
+func licenseSecret(cfg *Config) string {
+	if s := os.Getenv("ASTER_LICENSE_SECRET"); s != "" {
+		return s
+	}
+	return "dev-license-secret-change-me"
 }

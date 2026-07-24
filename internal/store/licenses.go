@@ -28,7 +28,7 @@ type LicenseRecord struct {
 // ActivateLicense stores a new license and deactivates any previous ones.
 func (db *DB) ActivateLicense(fullJSON string, cust, email, plan, modules, hwid string, issuedAt time.Time, expiresAt *time.Time, maxAgents int) (*LicenseRecord, error) {
 	// Deactivate all existing licenses
-	if _, err := db.conn.Exec(`UPDATE licenses SET is_active = false`); err != nil {
+	if _, err := db.Exec(`UPDATE licenses SET is_active = false`); err != nil {
 		return nil, fmt.Errorf("deactivate licenses: %w", err)
 	}
 
@@ -46,7 +46,7 @@ func (db *DB) ActivateLicense(fullJSON string, cust, email, plan, modules, hwid 
 		IsActive:    true,
 	}
 
-	err := db.conn.QueryRow(
+	err := db.QueryRow(
 		`INSERT INTO licenses (customer, email, plan, modules, issued_at, expires_at, max_agents, hwid, full_json, activated_at, is_active)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		 RETURNING id`,
@@ -64,7 +64,7 @@ func (db *DB) ActivateLicense(fullJSON string, cust, email, plan, modules, hwid 
 func (db *DB) GetActiveLicense() (*LicenseRecord, error) {
 	rec := &LicenseRecord{}
 	var expiresAt sql.NullTime
-	err := db.conn.QueryRow(
+	err := db.QueryRow(
 		`SELECT id, customer, email, plan, modules, issued_at, expires_at, max_agents, hwid, full_json, activated_at, is_active
 		 FROM licenses WHERE is_active = true LIMIT 1`,
 	).Scan(&rec.ID, &rec.Customer, &rec.Email, &rec.Plan, &rec.Modules,
@@ -85,7 +85,7 @@ func (db *DB) GetActiveLicense() (*LicenseRecord, error) {
 
 // ListLicenses returns all licenses ordered by activation date descending.
 func (db *DB) ListLicenses() ([]LicenseRecord, error) {
-	rows, err := db.conn.Query(
+	rows, err := db.Query(
 		`SELECT id, customer, email, plan, modules, issued_at, expires_at, max_agents, hwid, activated_at, is_active
 		 FROM licenses ORDER BY activated_at DESC`,
 	)
