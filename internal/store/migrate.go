@@ -49,14 +49,20 @@ CREATE INDEX IF NOT EXISTS idx_skills_user ON custom_skills(user_id);
 `},
 	{4, "create_licenses", `
 CREATE TABLE IF NOT EXISTS licenses (
-	id          TEXT PRIMARY KEY,
-	user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-	module_id   TEXT NOT NULL,
-	expires_at  TIMESTAMP,
-	created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	UNIQUE(user_id, module_id)
+	id           TEXT PRIMARY KEY,
+	customer     TEXT NOT NULL DEFAULT '',
+	email        TEXT NOT NULL DEFAULT '',
+	plan         TEXT NOT NULL DEFAULT 'trial',
+	modules      TEXT NOT NULL DEFAULT '["*"]',
+	issued_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	expires_at   TIMESTAMP,
+	max_agents   INTEGER NOT NULL DEFAULT 0,
+	hwid         TEXT NOT NULL DEFAULT '',
+	full_json    TEXT NOT NULL DEFAULT '',
+	activated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	is_active    BOOLEAN NOT NULL DEFAULT false
 );
-CREATE INDEX IF NOT EXISTS idx_licenses_user ON licenses(user_id);
+CREATE INDEX IF NOT EXISTS idx_licenses_active ON licenses(is_active);
 `},
 	{5, "create_schema_version", `
 CREATE TABLE IF NOT EXISTS schema_version (
