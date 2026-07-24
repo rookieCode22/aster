@@ -26,8 +26,7 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
-	home := mustHome()
-	dataDir := envStr("ASTER_DATA_DIR", filepath.Join(home, ".aster"))
+	dataDir := envStr("ASTER_DATA_DIR", defaultDataDir())
 	return &Config{
 		Host:        envStr("ASTER_HOST", "0.0.0.0"),
 		Port:        envInt("ASTER_PORT", 8080),
@@ -125,14 +124,18 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"ok":true,"service":"aster-server"}`)
 }
 
-func mustHome() string {
-	h, _ := os.UserHomeDir()
-	if len(h) > 2 && h[0] == '\\' && h[2] == ':' {
-		// Fix Windows paths like "\C:\Users\yummy" → "C:\Users\yummy"
-		h = h[1:]
+func defaultDataDir() string {
+	if d := os.Getenv("ASTER_DATA_DIR"); d != "" {
+		return d
 	}
-	return h
+	home, err := os.UserHomeDir()
+	if err == nil && home != "" {
+		return filepath.Clean(filepath.Join(home, ".aster"))
+	}
+	return ".aster"
 }
+
+func mustHome() string { return defaultDataDir() }
 
 func licenseSecret(cfg *Config) string {
 	if s := os.Getenv("ASTER_LICENSE_SECRET"); s != "" {
