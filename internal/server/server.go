@@ -52,7 +52,7 @@ type Server struct {
 func New(cfg *Config) (*Server, error) {
 	dsn := cfg.DatabaseURL
 	if dsn == "" {
-		dsn = "sqlite:///" + filepath.Join(cfg.DataDir, "aster.db")
+		dsn = "sqlite://" + filepath.Join(cfg.DataDir, "aster.db")
 	}
 
 	db, err := store.Open(dsn)
