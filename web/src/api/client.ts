@@ -72,7 +72,13 @@ export interface Session {
 
 export const sessions = {
   list: () => request<Session[]>('/sessions'),
-  get: (id: string) => request<Session>(`/sessions/${id}`),
+  // 后端无单条查询路由，从列表中取标题
+  get: async (id: string) => {
+    const all = await request<Session[]>('/sessions');
+    const found = all.find((s) => s.id === id);
+    if (!found) throw new Error('session not found');
+    return found;
+  },
   create: (title: string) =>
     request<Session>('/sessions', {
       method: 'POST',
@@ -83,25 +89,27 @@ export const sessions = {
 };
 
 // ─── Skills ───
+// 字段与后端 skillItem 对齐:name 为主键，无 id/category/content
 
 export interface Skill {
-  id: string;
   name: string;
   description: string;
-  category: string;
-  content: string;
-  created_at: string;
+  agent: string;
+  tags: string[];
+  source: string;
 }
 
 export const skills = {
-  list: () => request<Skill[]>('/skills'),
-  create: (body: { name: string; description: string; category: string; content: string }) =>
-    request<Skill>('/skills', {
+  // 后端返回 { skills: [...] }，需解包
+  list: () =>
+    request<{ skills: Skill[] }>('/skills').then((r) => r.skills ?? []),
+  create: (body: { name: string; description: string; instructions: string; tags?: string[] }) =>
+    request<Skill>('/skills/custom', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  delete: (id: string) =>
-    request<void>(`/skills/${id}`, { method: 'DELETE' }),
+  delete: (name: string) =>
+    request<void>(`/skills/custom/${encodeURIComponent(name)}`, { method: 'DELETE' }),
 };
 
 // ─── Modules ───
@@ -118,5 +126,6 @@ export const modules = {
 
 // ─── Health ───
 
+// health 端点在 /api/health（无 v1 前缀），故绕过 BASE 直接调用
 export const health = () =>
-  request<{ status: string; version: string }>('/health');
+  fetch('/api/health').then((r) => r.json() as Promise<{ ok: boolean; service: string }>);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { sessions, skills, modules, type Module, type Skill } from '../api/client';
+import { sessions, skills, modules, health } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -22,11 +22,10 @@ export default function Dashboard() {
   useEffect(() => {
     Promise.all([
       sessions.list().then((s) => setSessionCount(s.length)).catch(() => {}),
-      skills.list().then((s) => setSkillCount(s.length)).catch(() => setSkillCount(92)),
+      skills.list().then((s) => setSkillCount(s.length)).catch(() => {}),
       modules.list().then((m) => setModuleCount(m.length)).catch(() => {}),
-      fetch('/api/v1/health')
-        .then((r) => r.json())
-        .then((d) => setServerStatus(d.status === 'ok' ? 'ok' : 'error'))
+      health()
+        .then((d) => setServerStatus(d.ok ? 'ok' : 'error'))
         .catch(() => setServerStatus('error')),
     ]).finally(() => setLoading(false));
   }, []);

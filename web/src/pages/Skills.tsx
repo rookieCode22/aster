@@ -1,7 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { skills as skillsApi, type Skill } from '../api/client';
-
-const CATEGORIES = ['recon', 'exploit', 'post-exploit', 'web', 'network', 'cloud', 'custom'];
 
 export default function Skills() {
   const [list, setList] = useState<Skill[]>([]);
@@ -13,7 +11,7 @@ export default function Skills() {
   // Create form
   const [cName, setCName] = useState('');
   const [cDesc, setCDesc] = useState('');
-  const [cCat, setCCat] = useState('custom');
+  const [cTags, setCTags] = useState('');
   const [cContent, setCContent] = useState('');
 
   const fetchSkills = useCallback(async () => {
@@ -38,13 +36,13 @@ export default function Skills() {
       await skillsApi.create({
         name: cName.trim(),
         description: cDesc.trim(),
-        category: cCat,
-        content: cContent.trim(),
+        instructions: cContent.trim(),
+        tags: cTags.split(',').map((t) => t.trim()).filter(Boolean),
       });
       setShowCreate(false);
       setCName('');
       setCDesc('');
-      setCCat('custom');
+      setCTags('');
       setCContent('');
       fetchSkills();
     } catch (err: any) {
@@ -52,16 +50,23 @@ export default function Skills() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (name: string) => {
     try {
-      await skillsApi.delete(id);
-      setList((prev) => prev.filter((s) => s.id !== id));
+      await skillsApi.delete(name);
+      setList((prev) => prev.filter((s) => s.name !== name));
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  const filtered = filter ? list.filter((s) => s.category === filter) : list;
+  // 从现有技能的 tags 动态汇总出可筛选的标签集
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    list.forEach((s) => (s.tags ?? []).forEach((t) => set.add(t)));
+    return Array.from(set).sort();
+  }, [list]);
+
+  const filtered = filter ? list.filter((s) => (s.tags ?? []).includes(filter)) : list;
 
   return (
     <div className="space-y-6">
@@ -101,15 +106,13 @@ export default function Skills() {
             onChange={(e) => setCDesc(e.target.value)}
             className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition text-sm"
           />
-          <select
-            value={cCat}
-            onChange={(e) => setCCat(e.target.value)}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:border-emerald-500 transition text-sm"
-          >
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          <input
+            type="text"
+            placeholder="Tags (逗号分隔，如 recon, web)"
+            value={cTags}
+            onChange={(e) => setCTags(e.target.value)}
+            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition text-sm"
+          />
           <textarea
             placeholder="Skill content (SKILL.md format)"
             value={cContent}
@@ -137,15 +140,15 @@ export default function Skills() {
         >
           All
         </button>
-        {CATEGORIES.map((cat) => (
+        {allTags.map((tag) => (
           <button
-            key={cat}
-            onClick={() => setFilter(cat)}
+            key={tag}
+            onClick={() => setFilter(tag)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-              filter === cat ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+              filter === tag ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
             }`}
           >
-            {cat}
+            {tag}
           </button>
         ))}
       </div>
@@ -162,20 +165,27 @@ export default function Skills() {
         <div className="grid gap-3">
           {filtered.map((skill) => (
             <div
-              key={skill.id}
+              key={skill.name}
               className="flex items-start justify-between bg-gray-900/50 border border-gray-800 rounded-xl px-5 py-4 hover:border-gray-700 transition group"
             >
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-gray-200 font-medium truncate">{skill.name}</h3>
-                  <span className="text-[10px] px-2 py-0.5 bg-gray-800 rounded-full text-gray-400 uppercase">
-                    {skill.category}
-                  </span>
+                  {(skill.tags ?? []).map((tag) => (
+                    <span key={tag} className="text-[10px] px-2 py-0.5 bg-gray-800 rounded-full text-gray-400">
+                      {tag}
+                    </span>
+                  ))}
+                  {skill.source === 'custom' && (
+                    <span className="text-[10px] px-2 py-0.5 bg-emerald-900/40 rounded-full text-emerald-400 uppercase">
+                      custom
+                    </span>
+                  )}
                 </div>
                 <p className="text-gray-500 text-xs mt-1 line-clamp-2">{skill.description}</p>
               </div>
               <button
-                onClick={() => handleDelete(skill.id)}
+                onClick={() => handleDelete(skill.name)}
                 className="opacity-0 group-hover:opacity-100 px-3 py-1 text-red-400 hover:bg-red-900/30 rounded text-sm transition ml-4 shrink-0"
               >
                 Delete
