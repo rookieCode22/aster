@@ -33,6 +33,7 @@ func (db *DB) ActivateLicense(fullJSON string, cust, email, plan, modules, hwid 
 	}
 
 	rec := &LicenseRecord{
+		ID:          genID(),
 		Customer:    cust,
 		Email:       email,
 		Plan:        plan,
@@ -46,13 +47,13 @@ func (db *DB) ActivateLicense(fullJSON string, cust, email, plan, modules, hwid 
 		IsActive:    true,
 	}
 
-	err := db.QueryRow(
-		`INSERT INTO licenses (customer, email, plan, modules, issued_at, expires_at, max_agents, hwid, full_json, activated_at, is_active)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		 RETURNING id`,
-		rec.Customer, rec.Email, rec.Plan, rec.Modules, rec.IssuedAt, rec.ExpiresAt,
-		rec.MaxAgents, rec.HWID, rec.FullJSON, rec.ActivatedAt, rec.IsActive,
-	).Scan(&rec.ID)
+	_, err := db.DB.Exec(
+		`INSERT INTO licenses (id, customer, email, plan, modules, issued_at, expires_at, max_agents, hwid, full_json, activated_at, is_active)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		rec.ID, rec.Customer, rec.Email, rec.Plan, rec.Modules,
+		rec.IssuedAt, rec.ExpiresAt, rec.MaxAgents, rec.HWID, rec.FullJSON,
+		rec.ActivatedAt, rec.IsActive,
+	)
 
 	if err != nil {
 		return nil, fmt.Errorf("insert license: %w", err)

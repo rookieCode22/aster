@@ -176,20 +176,26 @@ export default function Skills() {
                       {tag}
                     </span>
                   ))}
-                  {skill.source === 'custom' && (
+                  {skill.source === 'custom' ? (
                     <span className="text-[10px] px-2 py-0.5 bg-emerald-900/40 rounded-full text-emerald-400 uppercase">
                       custom
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-2 py-0.5 bg-sky-900/40 rounded-full text-sky-400 uppercase">
+                      built-in
                     </span>
                   )}
                 </div>
                 <p className="text-gray-500 text-xs mt-1 line-clamp-2">{skill.description}</p>
               </div>
-              <button
-                onClick={() => handleDelete(skill.name)}
-                className="opacity-0 group-hover:opacity-100 px-3 py-1 text-red-400 hover:bg-red-900/30 rounded text-sm transition ml-4 shrink-0"
-              >
-                Delete
-              </button>
+              {skill.deletable && (
+                <button
+                  onClick={() => handleDelete(skill.name)}
+                  className="opacity-0 group-hover:opacity-100 px-3 py-1 text-red-400 hover:bg-red-900/30 rounded text-sm transition ml-4 shrink-0"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           ))}
         </div>

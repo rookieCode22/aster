@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Sessions from './pages/Sessions';
 import Chat from './pages/Chat';
 import Skills from './pages/Skills';
+import License from './pages/License';
+import Updates from './pages/Updates';
 
 export default function App() {
   return (
@@ -26,6 +28,8 @@ export default function App() {
             <Route path="sessions" element={<Sessions />} />
             <Route path="chat/:sessionId" element={<Chat />} />
             <Route path="skills" element={<Skills />} />
+            <Route path="license" element={<License />} />
+            <Route path="updates" element={<Updates />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

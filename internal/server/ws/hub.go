@@ -36,12 +36,18 @@ type wsConn interface {
 	Close() error
 }
 
+// ChatHandler is invoked when a client sends a chat message. sessionID and
+// userID identify the origin; content is the user's message text. Implementations
+// should run the agent and stream results back via Hub.SendEvent.
+type ChatHandler func(sessionID, userID, content string)
+
 // Hub manages all WebSocket connections and message routing.
 type Hub struct {
-	mu       sync.RWMutex
-	clients  map[*Client]bool
-	pending  chan func() // serialized operations
-	stopped  chan struct{}
+	mu          sync.RWMutex
+	clients     map[*Client]bool
+	pending     chan func() // serialized operations
+	stopped     chan struct{}
+	chatHandler ChatHandler
 }
 
 func NewHub() *Hub {
@@ -50,6 +56,29 @@ func NewHub() *Hub {
 		pending: make(chan func(), 256),
 		stopped: make(chan struct{}),
 	}
+}
+
+// SetChatHandler registers the callback invoked for each inbound chat message.
+func (h *Hub) SetChatHandler(fn ChatHandler) {
+	h.mu.Lock()
+	h.chatHandler = fn
+	h.mu.Unlock()
+}
+
+// dispatchChat invokes the registered chat handler in a fresh goroutine so the
+// connection's read loop is never blocked by agent execution.
+func (h *Hub) dispatchChat(sessionID, userID, content string) {
+	h.mu.RLock()
+	fn := h.chatHandler
+	h.mu.RUnlock()
+	if fn == nil {
+		h.SendEvent(sessionID, StreamEvent{
+			Type:    "error",
+			Payload: map[string]any{"message": "agent engine not configured on server"},
+		})
+		return
+	}
+	go fn(sessionID, userID, content)
 }
 
 func (h *Hub) Run() {

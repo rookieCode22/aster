@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sessions as sessionsApi, type Session } from '../api/client';
+import { exportReport, type ReportFormat } from '../api/report';
 
 export default function Sessions() {
   const [list, setList] = useState<Session[]>([]);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [exporting, setExporting] = useState<string>(''); // session id being exported
   const navigate = useNavigate();
 
   const fetchSessions = useCallback(async () => {
@@ -42,6 +44,19 @@ export default function Sessions() {
       setList((prev) => prev.filter((s) => s.id !== id));
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const handleExport = async (id: string, format: ReportFormat) => {
+    if (exporting) return;
+    setExporting(id);
+    setError('');
+    try {
+      await exportReport(id, format);
+    } catch (err: any) {
+      setError(err.message || '导出失败');
+    } finally {
+      setExporting('');
     }
   };
 
@@ -97,12 +112,32 @@ export default function Sessions() {
                   {new Date(s.created_at).toLocaleString()} · {s.status}
                 </p>
               </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
-                className="opacity-0 group-hover:opacity-100 px-3 py-1 text-red-400 hover:bg-red-900/30 rounded text-sm transition"
-              >
-                Delete
-              </button>
+              <div className="flex items-center gap-2 ml-4 shrink-0">
+                <select
+                  onChange={(e) => {
+                    const fmt = e.target.value as ReportFormat;
+                    if (fmt) handleExport(s.id, fmt);
+                    e.target.value = '';
+                  }}
+                  disabled={exporting === s.id}
+                  className="opacity-0 group-hover:opacity-100 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 text-xs focus:outline-none focus:border-emerald-500 transition"
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    {exporting === s.id ? '导出中…' : '导出'}
+                  </option>
+                  <option value="html">HTML</option>
+                  <option value="pdf">PDF</option>
+                  <option value="docx">DOCX</option>
+                  <option value="xlsx">XLSX</option>
+                </select>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
+                  className="opacity-0 group-hover:opacity-100 px-3 py-1 text-red-400 hover:bg-red-900/30 rounded text-sm transition"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))
         )}

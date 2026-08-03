@@ -58,14 +58,36 @@ func (c *Client) readPump() {
 			return
 		}
 
-		var msg Message
-		if err := json.Unmarshal(data, &msg); err != nil {
+		// The frontend sends {type, content}. Parse leniently: prefer a top-level
+		// "content" field; fall back to a JSON payload with a content field.
+		var raw struct {
+			Type    string          `json:"type"`
+			Content string          `json:"content"`
+			Payload json.RawMessage `json:"payload"`
+		}
+		if err := json.Unmarshal(data, &raw); err != nil {
 			continue
 		}
 
-		// Route incoming chat messages to the handler
-		c.hub.pending <- func() {
-			// Handled by the session's chat loop
+		if raw.Type == "ping" {
+			continue
 		}
+
+		content := raw.Content
+		if content == "" && len(raw.Payload) > 0 {
+			var p struct {
+				Content string `json:"content"`
+			}
+			if err := json.Unmarshal(raw.Payload, &p); err == nil {
+				content = p.Content
+			}
+		}
+		if content == "" {
+			continue
+		}
+
+		// Route incoming chat message to the agent engine. dispatchChat runs the
+		// handler in its own goroutine so this read loop stays responsive.
+		c.hub.dispatchChat(c.sessionID, c.userID, content)
 	}
 }

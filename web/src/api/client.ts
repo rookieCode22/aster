@@ -96,7 +96,8 @@ export interface Skill {
   description: string;
   agent: string;
   tags: string[];
-  source: string;
+  source: string; // "builtin" | "custom"
+  deletable: boolean;
 }
 
 export const skills = {
@@ -122,6 +123,74 @@ export interface Module {
 
 export const modules = {
   list: () => request<Module[]>('/modules'),
+};
+
+// ─── Updates ───
+
+export interface InstalledModule {
+  module_id: string;
+  version: string;
+  asset_type: string;
+  count: number;
+}
+
+export interface UpdateItem {
+  module_id: string;
+  version: string;
+  asset_type: string;
+  description?: string;
+  count: number;
+  filename: string;
+}
+
+export interface UpdateCheckResult {
+  installed: InstalledModule[];
+  updates: UpdateItem[];
+}
+
+export const updates = {
+  check: () => request<UpdateCheckResult>('/updates/check'),
+  apply: (filename: string) =>
+    request<{ applied: boolean; module_id: string; version: string; asset_type: string }>(
+      '/updates/apply',
+      { method: 'POST', body: JSON.stringify({ filename }) },
+    ),
+};
+
+// ─── License ───
+
+export interface LicenseStatus {
+  active: boolean;
+  customer?: string;
+  plan?: string;
+  modules?: string[];
+  days_remaining: number;
+  max_agents: number;
+  expires_at?: string;
+}
+
+export interface LicenseRecord {
+  id: string;
+  customer: string;
+  email: string;
+  plan: string;
+  modules: string;
+  issued_at: string;
+  expires_at?: string | null;
+  max_agents: number;
+  activated_at: string;
+  is_active: boolean;
+}
+
+// ACTIVATE 直接发送原始 license JSON(body 由调用方传入格式化后的字符串)
+export const license = {
+  status: () => request<LicenseStatus>('/license/status'),
+  activate: (rawLicense: string) =>
+    request<{ activated: boolean; license: LicenseRecord }>('/license/activate', {
+      method: 'POST',
+      body: rawLicense, // raw signed JSON, not wrapped
+    }),
+  history: () => request<LicenseRecord[]>('/license/history'),
 };
 
 // ─── Health ───

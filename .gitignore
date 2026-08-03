@@ -30,3 +30,6 @@ internal/vault/derive.go
 # Build artifacts
 build/
 *.astm
+/server
+/license-gen
+/licgen

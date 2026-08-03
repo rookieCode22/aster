@@ -70,6 +70,16 @@ CREATE TABLE IF NOT EXISTS schema_version (
 	applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 `},
+	{6, "create_messages", `
+CREATE TABLE IF NOT EXISTS messages (
+	id         TEXT PRIMARY KEY,
+	session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+	role       TEXT NOT NULL,
+	content    TEXT NOT NULL DEFAULT '',
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
+`},
 }
 
 func (db *DB) migrate() error {
