@@ -52,7 +52,7 @@ export default function Layout() {
             </div>
             <div className="min-w-0">
               <p className="text-sm text-gray-200 truncate">{user?.username}</p>
-              <p className="text-[10px] text-gray-500 truncate">{user?.email}</p>
+              <p className="text-[10px] text-gray-500 truncate">Signed in</p>
             </div>
           </div>
           <button

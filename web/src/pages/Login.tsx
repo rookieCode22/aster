@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
-  const { login, register } = useAuth();
+  const { user, login, register } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -26,6 +27,11 @@ export default function Login() {
       setBusy(false);
     }
   };
+
+  // 登录/注册成功后 user 变为有值，自动跳转到 Dashboard
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
